@@ -1,0 +1,53 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Код-Квест: Охота на Глюки</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "pixi.js": "https://cdn.jsdelivr.net/npm/pixi.js@7.2.4/dist/pixi.min.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen" class="screen">
+            <div class="logo-container">
+                <img src="assets/img/kontur-logo.png" alt="Контур" class="logo">
+            </div>
+            <h1>Код-Квест: Охота на Глюки</h1>
+            <img src="assets/img/FISH.gif" alt="Animated fish" class="fish-gif">
+            <p>Найди и устрани все глюки за 3 минуты!</p>
+            <button id="start-button" class="btn">Играть</button>
+            <div class="credits">
+                Сделано Пестовой Викторией, Екатериной Сапрыгиной, Слиньковым Ильей специально для хакатона UNIT.HACK, 2025
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen hidden">
+            <div class="game-header">
+                <div id="score-container">Очки: <span id="score">0</span></div>
+                <div id="timer-container">Время: <span id="timer">3:00</span></div>
+            </div>
+            <div id="task-title"></div>
+            <div id="game-area"></div>
+        </div>
+
+        <div id="result-screen" class="screen hidden">
+            <div class="logo-container">
+                <img src="assets/img/kontur-logo.png" alt="Контур" class="logo">
+            </div>
+            <h2>Игра завершена!</h2>
+            <p>Ваш результат: <span id="final-score">0</span> очков</p>
+            <p id="result-message"></p>
+            <button id="replay-button" class="btn">Играть снова</button>
+            <div id="leaderboard-container"></div>
+        </div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+</body>
+</html>
