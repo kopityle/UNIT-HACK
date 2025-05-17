@@ -5,10 +5,10 @@ const SCENARIOS_DATA = [
         id: 'basic_web',
         title: 'Построй базовую веб-архитектуру',
         components: [
-            { id: 'client', label: 'Клиент', x: 100, y: 200, info: "Конечный пользователь, запрашивает данные." },
-            { id: 'web_server', label: 'Веб-сервер', x: 300, y: 200, info: "Обрабатывает запросы от клиента, может обращаться к кэшу и БД." },
-            { id: 'database', label: 'База данных', x: 500, y: 300, info: "Хранит постоянные данные." },
-            { id: 'cache', label: 'Кэш', x: 500, y: 100, info: "Хранит часто запрашиваемые данные для быстрого доступа." }
+            { id: 'client', label: 'Клиент', x: 15, y: 35, info: "Конечный пользователь, запрашивает данные." },
+            { id: 'web_server', label: 'Веб-сервер', x: 45, y: 35, info: "Обрабатывает запросы от клиента, может обращаться к кэшу и БД." },
+            { id: 'database', label: 'База данных', x: 75, y: 50, info: "Хранит постоянные данные." },
+            { id: 'cache', label: 'Кэш', x: 75, y: 20, info: "Хранит часто запрашиваемые данные для быстрого доступа." }
         ],
         correctConnections: [
             { from: 'client', to: 'web_server' },
@@ -22,11 +22,11 @@ const SCENARIOS_DATA = [
         id: 'load_balanced_app',
         title: 'Собери отказоустойчивое приложение с балансировщиком',
         components: [
-            { id: 'client', label: 'Клиент', x: 50, y: 250 },
-            { id: 'lb', label: 'Балансировщик', x: 200, y: 250, info: "Распределяет нагрузку между сервером приложений." },
-            { id: 'app_server1', label: 'Сервер App #1', x: 350, y: 150 },
-            { id: 'app_server2', label: 'Сервер App #2', x: 350, y: 350 },
-            { id: 'database', label: 'База данных', x: 550, y: 250 }
+            { id: 'client', label: 'Клиент', x: 10, y: 40 },
+            { id: 'lb', label: 'Балансировщик', x: 30, y: 40, info: "Распределяет нагрузку между сервером приложений." },
+            { id: 'app_server1', label: 'Сервер App #1', x: 50, y: 25 },
+            { id: 'app_server2', label: 'Сервер App #2', x: 50, y: 55 },
+            { id: 'database', label: 'База данных', x: 70, y: 40 }
         ],
         correctConnections: [
             { from: 'client', to: 'lb' },
@@ -68,8 +68,8 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
         componentElement.dataset.id = compData.id;
         componentElement.textContent = compData.label;
         componentElement.style.position = 'absolute';
-        componentElement.style.left = `${compData.x}px`;
-        componentElement.style.top = `${compData.y}px`;
+        componentElement.style.left = `${compData.x}%`;
+        componentElement.style.top = `${compData.y}%`;
 
         // Добавление тултипа с информацией
         if (compData.info) {
@@ -83,125 +83,54 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
     // Правила соединений
     const correctConnections = currentScenario.correctConnections;
 
-    // Keep track of user's connections
+    // Отслеживание соединений пользователя
     const userConnections = [];
 
-    // Drawing state variables
-    let isDrawing = false;
-    let startComponent = null;
-    let currentLine = null;
-    let isDraggingConnection = false;
-    let selectedConnection = null;
+    // Переменная для отслеживания выбранного компонента
+    let selectedComponent = null;
 
-    // Function to make a line interactive
+    // Функция для создания интерактивной линии
     function makeLineInteractive(connection) {
         const { line } = connection;
-        
-        // Make line clickable
         line.style.cursor = 'pointer';
         line.style.pointerEvents = 'auto';
-        
-        // Add hover effect
+
+        // Эффект наведения
         line.addEventListener('mouseenter', () => {
-            if (!isDraggingConnection) {
-                line.setAttribute('stroke-width', '5');
-            }
+            line.setAttribute('stroke-width', '5');
         });
-        
+
         line.addEventListener('mouseleave', () => {
-            if (!isDraggingConnection) {
-                line.setAttribute('stroke-width', '3');
-            }
+            line.setAttribute('stroke-width', '3');
         });
 
-        // Add click to remove
+        // Удаление линии по клику/касанию
         line.addEventListener('click', (e) => {
-            if (!isDraggingConnection) {
-                e.stopPropagation();
-                // Remove connection
-                const index = userConnections.indexOf(connection);
-                if (index > -1) {
-                    userConnections.splice(index, 1);
-                    line.remove();
-                    // Remove marker if it exists
-                    const markerId = `arrow-${connection.from}-${connection.to}`;
-                    const marker = defs.querySelector(`#${markerId}`);
-                    if (marker) marker.remove();
-                }
-                playSoundFromGame('error');
-                checkConnections(); // Check if remaining connections are correct
-            }
+            e.stopPropagation();
+            removeConnection(connection);
+        });
+        line.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            removeConnection(connection);
         });
     }
 
-    function startDrawing(e) {
-        if (!gameState.isPlaying) return;
-        if (e.button !== 0) return;
-
-        isDrawing = true;
-        startComponent = e.currentTarget;
-
-        currentLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        currentLine.setAttribute('stroke', 'var(--accent-blue)');
-        currentLine.setAttribute('stroke-width', '3');
-        currentLine.setAttribute('stroke-linecap', 'round');
-
-        const startRect = startComponent.getBoundingClientRect();
-        const gameRect = gameAreaElement.getBoundingClientRect();
-
-        const x1 = startRect.left + startRect.width / 2 - gameRect.left;
-        const y1 = startRect.top + startRect.height / 2 - gameRect.top;
-
-        currentLine.setAttribute('x1', x1);
-        currentLine.setAttribute('y1', y1);
-        currentLine.setAttribute('x2', x1);
-        currentLine.setAttribute('y2', y1);
-
-        svg.appendChild(currentLine);
-
-        playSoundFromGame('click');
-        e.preventDefault();
-    }
-
-    function handleGameAreaMouseUp(e) {
-        if (!isDrawing || !startComponent) return;
-
-        const endComponent = e.target.closest('.component');
-
-        if (endComponent && startComponent !== endComponent) {
-            endDrawing(endComponent);
-        } else {
-            cancelDrawing();
-        }
-    }
-
-    function cancelDrawing() {
-        if (isDrawing && currentLine) {
-            currentLine.remove();
+    // Функция для удаления соединения
+    function removeConnection(connection) {
+        const index = userConnections.indexOf(connection);
+        if (index > -1) {
+            userConnections.splice(index, 1);
+            connection.line.remove();
+            const markerId = `arrow-${connection.from}-${connection.to}`;
+            const marker = defs.querySelector(`#${markerId}`);
+            if (marker) marker.remove();
             playSoundFromGame('error');
+            checkConnections();
         }
-        isDrawing = false;
-        startComponent = null;
-        currentLine = null;
     }
 
-    function updateLine(e) {
-        if (!isDrawing || !currentLine) return;
-
-        const gameRect = gameAreaElement.getBoundingClientRect();
-        const x2 = e.clientX - gameRect.left;
-        const y2 = e.clientY - gameRect.top;
-
-        currentLine.setAttribute('x2', x2);
-        currentLine.setAttribute('y2', y2);
-    }
-
-    function endDrawing(endComponent) {
-        if (!isDrawing || !startComponent || !endComponent) {
-            cancelDrawing();
-            return;
-        }
-
+    // Функция для создания соединения
+    function createConnection(startComponent, endComponent) {
         const fromId = startComponent.dataset.id;
         const toId = endComponent.dataset.id;
 
@@ -209,7 +138,7 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
             conn.from === fromId && conn.to === toId
         );
 
-        if (!connectionExists) {
+        if (!connectionExists && startComponent !== endComponent) {
             const startRect = startComponent.getBoundingClientRect();
             const endRect = endComponent.getBoundingClientRect();
             const gameRect = gameAreaElement.getBoundingClientRect();
@@ -219,25 +148,20 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
             let x2 = endRect.left + endRect.width / 2 - gameRect.left;
             let y2 = endRect.top + endRect.height / 2 - gameRect.top;
 
-            // Проверяем, есть ли обратное соединение
+            // Проверка на обратное соединение для смещения линии
             const reverseConnectionExists = userConnections.some(conn =>
                 conn.from === toId && conn.to === fromId
             );
 
             if (reverseConnectionExists) {
-                const offsetAmount = 5; // Сдвиг в пикселях
-
-                // Вектор линии (от текущей toId к fromId, чтобы получить перпендикуляр для fromId -> toId)
+                const offsetAmount = 5;
                 let dx = x1 - x2;
                 let dy = y1 - y2;
                 const length = Math.sqrt(dx * dx + dy * dy);
 
-                if (length > 0) { // Предотвращение деления на ноль
-                    // Нормализованный перпендикулярный вектор
+                if (length > 0) {
                     const perpX = -dy / length;
                     const perpY = dx / length;
-
-                    // Смещаем обе точки текущей линии
                     x1 += perpX * offsetAmount;
                     y1 += perpY * offsetAmount;
                     x2 += perpX * offsetAmount;
@@ -245,10 +169,14 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
                 }
             }
 
-            currentLine.setAttribute('x1', x1);
-            currentLine.setAttribute('y1', y1);
-            currentLine.setAttribute('x2', x2);
-            currentLine.setAttribute('y2', y2);
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('stroke', 'var(--accent-blue)');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('x1', x1);
+            line.setAttribute('y1', y1);
+            line.setAttribute('x2', x2);
+            line.setAttribute('y2', y2);
 
             const markerId = `arrow-${fromId}-${toId}`;
             if (!defs.querySelector(`#${markerId}`)) {
@@ -267,28 +195,51 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
                 marker.appendChild(path);
                 defs.appendChild(marker);
             }
-            currentLine.setAttribute('marker-end', `url(#${markerId})`);
+            line.setAttribute('marker-end', `url(#${markerId})`);
 
-            const connection = { from: fromId, to: toId, line: currentLine };
+            svg.appendChild(line);
+
+            const connection = { from: fromId, to: toId, line };
             userConnections.push(connection);
             makeLineInteractive(connection);
-
             playSoundFromGame('click');
             checkConnections();
         } else {
-            if (currentLine) {
-                currentLine.remove();
-                currentLine = null;
-            }
             playSoundFromGame('error');
         }
-
-        // Сброс состояния рисования
-        isDrawing = false;
-        startComponent = null;
-        currentLine = null;
     }
 
+    // Функция для очистки всех соединений
+    function clearAllConnections() {
+        userConnections.forEach(connection => {
+            connection.line.remove();
+            const markerId = `arrow-${connection.from}-${connection.to}`;
+            const marker = defs.querySelector(`#${markerId}`);
+            if (marker) marker.remove();
+        });
+        userConnections.length = 0;
+        playSoundFromGame('click');
+        checkConnections();
+    }
+
+    // Обработка касания/клика компонента
+    function handleComponentInteraction(e) {
+        if (!gameState.isPlaying) return;
+        e.preventDefault();
+        const component = e.currentTarget;
+
+        if (selectedComponent) {
+            createConnection(selectedComponent, component);
+            selectedComponent.classList.remove('selected');
+            selectedComponent = null;
+        } else {
+            selectedComponent = component;
+            component.classList.add('selected');
+            playSoundFromGame('click');
+        }
+    }
+
+    // Проверка правильности соединений
     function checkConnections() {
         const allRequiredMade = correctConnections.every(required => {
             return userConnections.some(userConn =>
@@ -297,10 +248,16 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
         });
 
         if (allRequiredMade) {
-            // Disable all interactions
-            gameAreaElement.removeEventListener('mouseup', handleGameAreaMouseUp);
-            gameAreaElement.removeEventListener('mousemove', updateLine);
-            gameAreaElement.removeEventListener('mouseleave', cancelDrawing);
+            // Отключаем взаимодействия
+            const componentElements = gameAreaElement.querySelectorAll('.component');
+            componentElements.forEach(component => {
+                component.removeEventListener('click', handleComponentInteraction);
+                component.removeEventListener('touchstart', handleComponentInteraction);
+            });
+            clearButton.removeEventListener('click', clearAllConnections);
+            clearButton.removeEventListener('touchstart', clearAllConnections);
+            rotateMessage.removeEventListener('click', clearAllConnections);
+            rotateMessage.removeEventListener('touchstart', clearAllConnections);
 
             userConnections.forEach(conn => {
                 conn.line.style.pointerEvents = 'none';
@@ -318,13 +275,99 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
         }
     }
 
-    // Add event listeners
-    const componentElements = gameAreaElement.querySelectorAll('.component');
-    componentElements.forEach(component => {
-        component.addEventListener('mousedown', startDrawing);
+    // Создание кнопки "Стереть все"
+    const clearButton = document.createElement('button');
+    clearButton.className = 'choice-btn clear-button';
+    clearButton.textContent = 'Стереть все';
+    clearButton.style.zIndex = '1000';
+    gameAreaElement.appendChild(clearButton);
+
+    // Функция для обновления позиции кнопки
+    function updateClearButtonPosition() {
+        if (window.innerWidth >= 768) {
+            // Десктоп: размещаем под схемой внутри #game-area
+            clearButton.style.position = 'absolute';
+            clearButton.style.bottom = '20px';
+            clearButton.style.left = '50%';
+            clearButton.style.transform = 'translateX(-50%)';
+            clearButton.style.right = 'auto';
+        } else {
+            // Мобильные: фиксируем в правом нижнем углу экрана
+            clearButton.style.position = 'fixed';
+            clearButton.style.bottom = '20px';
+            clearButton.style.right = '20px';
+            clearButton.style.left = 'auto';
+            clearButton.style.transform = 'none';
+        }
+    }
+
+    // Инициализация позиции кнопки
+    updateClearButtonPosition();
+
+    // Обновление позиции при изменении размера экрана
+    window.addEventListener('resize', updateClearButtonPosition);
+
+    clearButton.addEventListener('click', clearAllConnections);
+    clearButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        clearAllConnections();
     });
 
-    gameAreaElement.addEventListener('mouseup', handleGameAreaMouseUp);
-    gameAreaElement.addEventListener('mousemove', updateLine);
-    gameAreaElement.addEventListener('mouseleave', cancelDrawing);
+    // Создание сообщения "Переверни телефон"
+    const rotateMessage = document.createElement('div');
+    rotateMessage.className = 'rotate-message';
+    rotateMessage.textContent = 'Переверни телефон в горизонтальное положение';
+    rotateMessage.style.position = 'absolute';
+    rotateMessage.style.top = '50%';
+    rotateMessage.style.left = '50%';
+    rotateMessage.style.transform = 'translate(-50%, -50%)';
+    rotateMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    rotateMessage.style.color = 'white';
+    rotateMessage.style.padding = '15px 20px';
+    rotateMessage.style.borderRadius = '10px';
+    rotateMessage.style.textAlign = 'center';
+    rotateMessage.style.zIndex = '1000';
+    rotateMessage.style.display = 'none';
+    gameAreaElement.appendChild(rotateMessage);
+
+    // Проверка ориентации и ширины экрана
+    function checkOrientation() {
+        if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
+            rotateMessage.style.display = 'block';
+        } else {
+            rotateMessage.style.display = 'none';
+        }
+    }
+
+    // Проверка при загрузке и изменении ориентации
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+
+    // Добавление стилей для выбранного компонента и сообщения
+    const style = document.createElement('style');
+    style.textContent = `
+        .component.selected {
+            box-shadow: 0 0 10px var(--accent-blue);
+            transform: scale(1.1);
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            .rotate-message {
+                display: block;
+            }
+        }
+        @media (max-width: 768px) and (orientation: landscape) {
+            .rotate-message {
+                display: none;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Добавление обработчиков событий
+    const componentElements = gameAreaElement.querySelectorAll('.component');
+    componentElements.forEach(component => {
+        component.addEventListener('click', handleComponentInteraction);
+        component.addEventListener('touchstart', handleComponentInteraction, { passive: false });
+    });
 }

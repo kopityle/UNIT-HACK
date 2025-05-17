@@ -1,7 +1,7 @@
 import { playSound } from '../utils/audio.js';
 
 export function setupRestoreBackupTask({ gameAreaElement, taskTitleElement, completeTask, gameState, updateScore, playSound: playSoundFromGame }) {
-    taskTitleElement.textContent = 'Срочно! Сервер упал. Восстановите данные из последнего стабильного бэкапа!';
+    taskTitleElement.textContent = 'Срочно! Сервер упал. Что нужно делать?!';
 
     const backupContainer = document.createElement('div');
     backupContainer.className = 'backup-container';

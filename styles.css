@@ -506,3 +506,70 @@ svg line:hover {
     color: var(--secondary-text);
     opacity: 0.7;
 }
+
+.rotate-message {
+    display: none;
+    font-size: 1rem;
+    max-width: 80%;
+    line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+    .component {
+        width: 60px;
+        height: 60px;
+        font-size: 0.8rem;
+        transform: scale(0.8);
+    }
+    .component img {
+        width: 40px;
+        height: 40px;
+    }
+    #game-area {
+        transform: scale(0.75);
+    }
+    .rotate-message {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+    }
+    .clear-button {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Стили для кнопки "Пропустить" */
+.skip-button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.skip-button:hover {
+    background-color: red;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .skip-button {
+         background-color: red;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        margin-top: 500px;
+        margin-right: 70px;
+    }
+}
+
+@media (max-width: 480px) {
+    .skip-button {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        margin-top: 500px;
+        margin-right: 100px;
+    }
+}
+

@@ -39,6 +39,78 @@ export function setupFindBugTask({ gameAreaElement, taskTitleElement, completeTa
             ],
             bugIndex: 2,
             bugElement: ','
+        },
+        {
+            code: [
+                '<span class="code-keyword">function</span> <span class="code-function">checkAccess</span><span class="code-bracket">(</span><span class="code-variable">role</span><span class="code-bracket">)</span> <span class="code-bracket">{</span>',
+                '  <span class="code-keyword">if</span> <span class="code-bracket">(</span><span class="code-variable">role</span> <span class="bug code-operator">=</span> <span class="code-string">"admin"</span><span class="code-bracket">)</span> <span class="code-bracket">{</span> <span class="code-comment">// Error: = instead of ===</span>',
+                '    <span class="code-keyword">return</span> <span class="code-keyword">true</span><span class="code-punctuation">;</span>',
+                '  <span class="code-bracket">}</span>',
+                '  <span class="code-keyword">return</span> <span class="code-keyword">false</span><span class="code-punctuation">;</span>',
+                '<span class="code-bracket">}</span>'
+            ],
+            bugIndex: 1,
+            bugElement: '='
+        },
+        {
+            code: [
+                '<span class="code-keyword bug">cosnt</span> <span class="code-variable">config</span> <span class="code-operator">=</span> <span class="code-bracket">{</span> <span class="code-comment">// Error: cosnt instead of const</span>',
+                '  <span class="code-variable">port</span><span class="code-punctuation">:</span> <span class="code-number">8080</span><span class="code-punctuation">,</span>',
+                '  <span class="code-variable">host</span><span class="code-punctuation">:</span> <span class="code-string">"localhost"</span>',
+                '<span class="code-bracket">}</span><span class="code-punctuation">;</span>'
+            ],
+            bugIndex: 0,
+            bugElement: 'cosnt'
+        },
+        {
+            code: [
+                '<span class="code-keyword">function</span> <span class="code-function">getProfile</span><span class="code-bracket">(</span><span class="code-variable">user</span><span class="code-bracket">)</span> <span class="code-bracket">{</span>',
+                '  <span class="code-keyword">const</span> <span class="bug code-variable">user Name</span> <span class="code-operator">=</span> <span class="code-variable">user</span><span class="code-punctuation">.</span><span class="code-variable">name</span><span class="code-punctuation">;</span> <span class="code-comment">// Error: space in variable name</span>',
+                '  <span class="code-keyword">return</span> <span class="code-variable">userName</span><span class="code-punctuation">;</span>',
+                '<span class="code-bracket">}</span>'
+            ],
+            bugIndex: 1,
+            bugElement: 'user Name'
+        },
+        {
+            code: [
+                '<span class="code-keyword">const</span> <span class="code-variable">greeting</span> <span class="code-operator">=</span> <span class="bug code-string">\'Hello, ${name}!\'</span><span class="code-punctuation">;</span> <span class="code-comment">// Error: single quotes instead of backticks</span>',
+                '  <span class="code-keyword">return</span> <span class="code-variable">greeting</span><span class="code-punctuation">;</span>'
+            ],
+            bugIndex: 0,
+            bugElement: '\'Hello, ${name}!\''
+        },
+        {
+            code: [
+                '<span class="code-keyword">const</span> <span class="code-variable">items</span> <span class="code-operator">=</span> <span class="code-bracket">[</span><span class="code-number">1</span><span class="code-punctuation">,</span> <span class="code-number">2</span><span class="code-punctuation">,</span> <span class="code-number">3</span><span class="code-bracket">]</span><span class="code-punctuation">;</span>',
+                '<span class="code-keyword">const</span> <span class="code-variable">count</span> <span class="code-operator">=</span> <span class="code-variable">items</span><span class="code-punctuation">.</span><span class="bug code-variable">lenght</span><span class="code-punctuation">;</span> <span class="code-comment">// Error: lenght instead of length</span>',
+                '<span class="code-keyword">return</span> <span class="code-variable">count</span><span class="code-punctuation">;</span>'
+            ],
+            bugIndex: 1,
+            bugElement: 'lenght'
+        },
+        {
+        code: [
+            '<span class="code-keyword">function</span> <span class="code-function">sanitizeInput</span><span class="code-bracket">(</span><span class="code-variable">input</span><span class="code-bracket">)</span> <span class="code-bracket">{</span>',
+            '  <span class="code-keyword">const</span> <span class="code-variable">clean</span> <span class="code-operator">=</span> <span class="code-variable">input</span><span class="code-punctuation">.</span><span class="bug code-variable">toLowercase</span><span class="code-bracket">(</span><span class="code-bracket">)</span><span class="code-punctuation">;</span> <span class="code-comment">// Error: toLowercase instead of toLowerCase</span>',
+            '  <span class="code-keyword">return</span> <span class="code-variable">clean</span><span class="code-punctuation">;</span>',
+            '<span class="code-bracket">}</span>'
+        ],
+        bugIndex: 1,
+        bugElement: 'toLowercase'
+        },
+        {
+            code: [
+                '<span class="code-keyword">function</span> <span class="code-function">countRecords</span><span class="code-bracket">(</span><span class="code-variable">records</span><span class="code-bracket">)</span> <span class="code-bracket">{</span>',
+                '  <span class="code-keyword">let</span> <span class="code-variable">count</span> <span class="code-operator">=</span> <span class="code-number">0</span><span class="code-punctuation">;</span>',
+                '  <span class="code-keyword">for</span> <span class="code-bracket">(</span><span class="code-keyword">let</span> <span class="code-variable">i</span> <span class="code-operator">=</span> <span class="code-number">0</span><span class="bug code-punctuation">;;</span> <span class="code-variable">i</span> <span class="code-operator"><</span> <span class="code-variable">records</span><span class="code-punctuation">.</span><span class="code-variable">length</span><span class="code-punctuation">;</span> <span class="code-variable">i</span><span class="code-operator">++</span><span class="code-bracket">)</span> <span class="code-bracket">{</span> <span class="code-comment">// Error: extra semicolon ;;</span>',
+                '    <span class="code-variable">count</span><span class="code-operator">++</span><span class="code-punctuation">;</span>',
+                '  <span class="code-bracket">}</span>',
+                '  <span class="code-keyword">return</span> <span class="code-variable">count</span><span class="code-punctuation">;</span>',
+                '<span class="code-bracket">}</span>'
+            ],
+            bugIndex: 2,
+            bugElement: ';;'
         }
     ];
 

@@ -7,6 +7,7 @@ import { setupCloseVulnerabilityTask } from './tasks/closeVulnerability.js';
 import { setupStopDdosAttackTask } from './tasks/stopDdosAttack.js';
 import { setupRestoreBackupTask } from './tasks/restoreBackup.js';
 import { setupSortDataTask } from './tasks/sortData.js';
+import { setupAnswerQuestionTask } from './tasks/answerQuestion.js';
 import { initAudioContext, loadAllSounds, playSound } from './utils/audio.js';
 import { supabase } from './utils/supabase.js';
 
@@ -19,7 +20,8 @@ const TASK_TYPES = [
     'decryptMessage', 
     'sortData', 
     'stopDdosAttack', 
-    'restoreBackup'
+    'restoreBackup',
+    'answerQuestion'
 ];
 
 // Состояние игры
@@ -65,7 +67,7 @@ function initGame() {
 }
 
 function startGame() {
-    // Инициализация аудио, если еще не сделано
+
     initAudioContext();
 
     // Воспроизведение звука
@@ -155,6 +157,58 @@ function showNextTask() {
     // Очистка игровой области
     gameAreaElement.innerHTML = '';
 
+    // Создание кнопки "Пропустить"
+    const skipButton = document.createElement('button');
+    skipButton.className = 'choice-btn skip-button';
+    skipButton.textContent = 'Пропустить (-100 очков)';
+    skipButton.style.position = 'fixed';
+    skipButton.style.top = '20px';
+    skipButton.style.right = '20px';
+    skipButton.style.zIndex = '1000';
+    gameAreaElement.appendChild(skipButton);
+
+    // Обработчик пропуска задачи
+    function handleSkipTask(e) {
+        e.preventDefault();
+        if (!gameState.isPlaying) return;
+
+        // Вычитаем 100 очков
+        gameState.score = Math.max(0, gameState.score - 100);
+        updateScore();
+
+        // Воспроизводим звук
+        playSound('error');
+
+        // Показываем анимацию вычета очков
+        const penaltyMsg = document.createElement('div');
+        penaltyMsg.textContent = '-100';
+        penaltyMsg.style.position = 'absolute';
+        penaltyMsg.style.top = '50%';
+        penaltyMsg.style.left = '50%';
+        penaltyMsg.style.transform = 'translate(-50%, -50%)';
+        penaltyMsg.style.fontSize = '2rem';
+        penaltyMsg.style.color = 'var(--error-color)';
+        penaltyMsg.style.zIndex = '100';
+        gameAreaElement.appendChild(penaltyMsg);
+
+        let opacity = 1;
+        const fadeInterval = setInterval(() => {
+            opacity -= 0.05;
+            penaltyMsg.style.opacity = opacity;
+            if (opacity <= 0) {
+                clearInterval(fadeInterval);
+                gameAreaElement.removeChild(penaltyMsg);
+            }
+        }, 30);
+
+        // Переключаем задачу
+        showNextTask();
+    }
+
+    // Добавляем обработчики для клика и касания
+    skipButton.addEventListener('click', handleSkipTask);
+    skipButton.addEventListener('touchstart', handleSkipTask, { passive: false });
+
     // Выбор случайной задачи
     const taskType = TASK_TYPES[Math.floor(Math.random() * TASK_TYPES.length)];
 
@@ -180,6 +234,9 @@ function showNextTask() {
             break;
         case 'restoreBackup':
             setupRestoreBackupTask({ gameAreaElement, taskTitleElement, completeTask, gameState, updateScore, playSound });
+            break;
+        case 'answerQuestion':
+            setupAnswerQuestionTask({ gameAreaElement, taskTitleElement, completeTask, gameState, updateScore, playSound });
             break;
         default:
             console.error('Unknown task type:', taskType);

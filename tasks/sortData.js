@@ -3,91 +3,98 @@ import { playSound } from '../utils/audio.js';
 export function setupSortDataTask({ gameAreaElement, taskTitleElement, completeTask, gameState, updateScore, playSound: playSoundFromGame }) {
     taskTitleElement.textContent = 'Отсортируй данные по возрастанию';
 
-    // Create sorting container
+    // Создание контейнера для сортировки
     const sortContainer = document.createElement('div');
     sortContainer.className = 'sortable-container';
 
-    // Generate random numbers to sort
-    const numItems = Math.floor(Math.random() * 3) + 4; // 4-6 items
-    const numbers = [];
+    // Генерация случайных чисел
+    const numItems = Math.floor(Math.random() * 3) + 4; // 4-6 элементов
+    const numbers = Array.from({ length: numItems }, () => Math.floor(Math.random() * 100));
+    numbers.sort(() => Math.random() - 0.5); // Перемешивание
 
-    for (let i = 0; i < numItems; i++) {
-        numbers.push(Math.floor(Math.random() * 100));
-    }
-
-    // Shuffle the numbers
-    numbers.sort(() => Math.random() - 0.5);
-
-    // Create sortable items
-    numbers.forEach(num => {
+    // Создание элементов для сортировки
+    const items = numbers.map(num => {
         const item = document.createElement('div');
         item.className = 'sortable-item';
         item.textContent = num;
-        item.draggable = true;
-
-        // Add drag events
-        item.addEventListener('dragstart', dragStart);
-        item.addEventListener('dragover', dragOver);
-        item.addEventListener('dragenter', dragEnter);
-        item.addEventListener('dragleave', dragLeave);
-        item.addEventListener('drop', drop);
-        item.addEventListener('dragend', dragEnd);
-
         sortContainer.appendChild(item);
+        return item;
     });
 
     gameAreaElement.appendChild(sortContainer);
 
-    // Drag and drop functionality
     let draggedItem = null;
+    let startX, startY;
 
-    function dragStart() {
-        draggedItem = this;
-        setTimeout(() => this.classList.add('dragging'), 0);
+    // Обработка начала перетаскивания
+    function startDrag(e) {
+        if (!gameState.isPlaying) return;
+        e.preventDefault();
+        draggedItem = e.currentTarget;
+        draggedItem.classList.add('dragging');
+
+        const touch = e.type === 'touchstart' ? e.touches[0] : e;
+        startX = touch.clientX;
+        startY = touch.clientY;
+
         playSoundFromGame('click');
     }
 
-    function dragOver(e) {
+    // Обработка движения
+    function dragMove(e) {
+        if (!draggedItem) return;
         e.preventDefault();
-    }
 
-    function dragEnter(e) {
-        e.preventDefault();
-        this.classList.add('drag-over');
-    }
+        const touch = e.type === 'touchmove' ? e.touches[0] : e;
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
 
-    function dragLeave() {
-        this.classList.remove('drag-over');
-    }
+        draggedItem.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        draggedItem.style.zIndex = '1000';
 
-    function drop() {
-        this.classList.remove('drag-over');
+        // Определяем, над каким элементом находится перетаскиваемый
+        const target = findDropTarget(touch.clientX, touch.clientY);
+        if (target && target !== draggedItem) {
+            const allItems = [...sortContainer.querySelectorAll('.sortable-item')];
+            const draggedIndex = allItems.indexOf(draggedItem);
+            const targetIndex = allItems.indexOf(target);
 
-        // Get the index of both items
-        const allItems = [...sortContainer.querySelectorAll('.sortable-item')];
-        const draggedIndex = allItems.indexOf(draggedItem);
-        const dropTargetIndex = allItems.indexOf(this);
-
-        // Swap the items
-        if (draggedIndex < dropTargetIndex) {
-            sortContainer.insertBefore(draggedItem, this.nextSibling);
-        } else {
-            sortContainer.insertBefore(draggedItem, this);
+            if (draggedIndex < targetIndex) {
+                sortContainer.insertBefore(draggedItem, target.nextSibling);
+            } else {
+                sortContainer.insertBefore(draggedItem, target);
+            }
         }
+    }
 
-        // Check if items are sorted
+    // Обработка окончания перетаскивания
+    function endDrag(e) {
+        if (!draggedItem) return;
+        e.preventDefault();
+
+        draggedItem.style.transform = '';
+        draggedItem.style.zIndex = '';
+        draggedItem.classList.remove('dragging');
+        draggedItem = null;
+
+        playSoundFromGame('click');
         checkSorting();
     }
 
-    function dragEnd() {
-        this.classList.remove('dragging');
+    // Поиск цели для сброса
+    function findDropTarget(x, y) {
+        const allItems = [...sortContainer.querySelectorAll('.sortable-item')];
+        return allItems.find(item => {
+            if (item === draggedItem) return false;
+            const rect = item.getBoundingClientRect();
+            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        });
     }
 
+    // Проверка сортировки
     function checkSorting() {
         const items = [...sortContainer.querySelectorAll('.sortable-item')];
         const currentValues = items.map(item => parseInt(item.textContent));
-
-        // Check if sorted in ascending order
         let isSorted = true;
         for (let i = 1; i < currentValues.length; i++) {
             if (currentValues[i] < currentValues[i - 1]) {
@@ -97,22 +104,41 @@ export function setupSortDataTask({ gameAreaElement, taskTitleElement, completeT
         }
 
         if (isSorted) {
-            // Remove event listeners
             items.forEach(item => {
-                item.removeEventListener('dragstart', dragStart);
-                item.removeEventListener('dragover', dragOver);
-                item.removeEventListener('dragenter', dragEnter);
-                item.removeEventListener('dragleave', dragLeave);
-                item.removeEventListener('drop', drop);
-                item.removeEventListener('dragend', dragEnd);
-
                 item.style.backgroundColor = 'var(--success-color)';
                 item.style.color = 'white';
+                item.removeEventListener('mousedown', startDrag);
+                item.removeEventListener('touchstart', startDrag);
             });
-
+            document.removeEventListener('mousemove', dragMove);
+            document.removeEventListener('touchmove', dragMove);
+            document.removeEventListener('mouseup', endDrag);
+            document.removeEventListener('touchend', endDrag);
             setTimeout(() => {
                 completeTask(true, Math.floor(gameState.timeLeft / 10));
             }, 500);
         }
     }
+
+    // Добавление обработчиков событий
+    items.forEach(item => {
+        item.addEventListener('mousedown', startDrag);
+        item.addEventListener('touchstart', startDrag, { passive: false });
+    });
+
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('touchmove', dragMove, { passive: false });
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+
+    // Добавление стилей для перетаскивания
+    const style = document.createElement('style');
+    style.textContent = `
+        .sortable-item.dragging {
+            opacity: 0.7;
+            box-shadow: 0 0 10px var(--accent-blue);
+            cursor: grabbing;
+        }
+    `;
+    document.head.appendChild(style);
 }
