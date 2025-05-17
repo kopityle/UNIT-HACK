@@ -2,11 +2,11 @@
 let audioContext = null;
 const audioBuffers = {};
 const soundsToLoad = [
-    { name: 'success', url: 'assets/audio/success.mp3' },
-    { name: 'error', url: 'assets/audio/error.mp3' },
-    { name: 'click', url: 'assets/audio/click.mp3' },
-    { name: 'gameOver', url: 'assets/audio/game-over.mp3' },
-    { name: 'countdown', url: 'assets/audio/countdown.mp3' },
+    { name: 'success', url: './assets/audio/success.mp3' },
+    { name: 'error', url: './assets/audio/error.mp3' },
+    { name: 'click', url: './assets/audio/click.mp3' },
+    { name: 'gameOver', url: './assets/audio/game-over.mp3' },
+    { name: 'countdown', url: './assets/audio/countdown.mp3' },
 ];
 let soundsLoaded = false;
 

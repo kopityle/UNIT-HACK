@@ -1,4 +1,4 @@
-import { playSound } from '../audio.js';
+import { playSound } from '../utils/audio.js';
 
 export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, completeTask, gameState, updateScore, playSound: playSoundFromGame }) {
     taskTitleElement.textContent = 'Соедини компоненты правильно';
