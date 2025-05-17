@@ -94,7 +94,7 @@ export function setupStopDdosAttackTask({ gameAreaElement, taskTitleElement, com
                     this.style.transform = 'scale(1.5)';
                     this.style.opacity = '0';
                     setTimeout(() => {
-                        gameAreaElement.removeChild(this);
+                        destroyPacket(this);
                         packets.splice(index, 1);
                     }, 200);
                     playSoundFromGame('success');
@@ -102,7 +102,7 @@ export function setupStopDdosAttackTask({ gameAreaElement, taskTitleElement, com
                     goodPacketsDestroyed++;
                     this.style.backgroundColor = 'var(--error-color)';
                     setTimeout(() => {
-                        gameAreaElement.removeChild(this);
+                        destroyPacket(this);
                         packets.splice(index, 1);
                     }, 200);
                     playSound('error');
@@ -118,7 +118,7 @@ export function setupStopDdosAttackTask({ gameAreaElement, taskTitleElement, com
 
                     // Remove all packets
                     packets.forEach(packet => {
-                        gameAreaElement.removeChild(packet.element);
+                        destroyPacket(packet.element);
                     });
                     packets.length = 0;
 
@@ -166,7 +166,7 @@ export function setupStopDdosAttackTask({ gameAreaElement, taskTitleElement, com
             // Check if packet reached the server (within 30px)
             if (distance < 30) {
                 // Remove the packet
-                gameAreaElement.removeChild(packet.element);
+                destroyPacket(packet.element);
                 packets.splice(i, 1);
 
                 // Penalty if bad packet reaches server
@@ -183,6 +183,26 @@ export function setupStopDdosAttackTask({ gameAreaElement, taskTitleElement, com
                     playSound('error');
                 }
             }
+        }
+    }
+
+    function destroyPacket(packet) {
+        // Проверяем, существует ли элемент и является ли он дочерним элементом gameAreaElement
+        if (packet && packet.parentNode === gameAreaElement) {
+            gameAreaElement.removeChild(packet);
+        }
+    }
+
+    function stopGame() {
+        // Очистка всех пакетов
+        packets.forEach(packet => {
+            destroyPacket(packet.element);
+        });
+        packets.length = 0; // Очищаем массив пакетов
+
+        // Остановка интервала создания пакетов
+        if (spawnInterval) {
+            clearInterval(spawnInterval);
         }
     }
 }

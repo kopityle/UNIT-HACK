@@ -1,7 +1,50 @@
 import { playSound } from '../utils/audio.js';
 
+const SCENARIOS_DATA = [
+    {
+        id: 'basic_web',
+        title: 'Построй базовую веб-архитектуру',
+        components: [
+            { id: 'client', label: 'Клиент', x: 100, y: 200, info: "Конечный пользователь, запрашивает данные." },
+            { id: 'web_server', label: 'Веб-сервер', x: 300, y: 200, info: "Обрабатывает запросы от клиента, может обращаться к кэшу и БД." },
+            { id: 'database', label: 'База данных', x: 500, y: 300, info: "Хранит постоянные данные." },
+            { id: 'cache', label: 'Кэш', x: 500, y: 100, info: "Хранит часто запрашиваемые данные для быстрого доступа." }
+        ],
+        correctConnections: [
+            { from: 'client', to: 'web_server' },
+            { from: 'web_server', to: 'client' },
+            { from: 'web_server', to: 'database' },
+            { from: 'web_server', to: 'cache' },
+            { from: 'cache', to: 'web_server' }
+        ]
+    },
+    {
+        id: 'load_balanced_app',
+        title: 'Собери отказоустойчивое приложение с балансировщиком',
+        components: [
+            { id: 'client', label: 'Клиент', x: 50, y: 250 },
+            { id: 'lb', label: 'Балансировщик', x: 200, y: 250, info: "Распределяет нагрузку между сервером приложений." },
+            { id: 'app_server1', label: 'Сервер App #1', x: 350, y: 150 },
+            { id: 'app_server2', label: 'Сервер App #2', x: 350, y: 350 },
+            { id: 'database', label: 'База данных', x: 550, y: 250 }
+        ],
+        correctConnections: [
+            { from: 'client', to: 'lb' },
+            { from: 'lb', to: 'app_server1' },
+            { from: 'lb', to: 'app_server2' },
+            { from: 'app_server1', to: 'database' },
+            { from: 'app_server2', to: 'database' },
+            { from: 'app_server1', to: 'lb' },
+            { from: 'app_server2', to: 'lb' },
+            { from: 'lb', to: 'client' }
+        ]
+    }
+];
+
 export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, completeTask, gameState, updateScore, playSound: playSoundFromGame }) {
-    taskTitleElement.textContent = 'Соедини компоненты правильно';
+    // Выбор случайного сценария
+    const currentScenario = SCENARIOS_DATA[Math.floor(Math.random() * SCENARIOS_DATA.length)];
+    taskTitleElement.textContent = currentScenario.title;
 
     // Создание контейнера SVG для рисования линий
     const svgContainer = document.createElement('div');
@@ -18,45 +61,30 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
 
     gameAreaElement.appendChild(svgContainer);
 
-    // Определение компонентов
-    const components = [
-        { id: 'client', label: 'Клиент', x: 150, y: 150 },
-        { id: 'server', label: 'Сервер', x: 400, y: 150 },
-        { id: 'database', label: 'База данных', x: 650, y: 150 },
-        { id: 'cache', label: 'Кэш', x: 400, y: 300 }
-    ];
+    // Создание компонентов
+    const components = currentScenario.components.map(compData => {
+        const componentElement = document.createElement('div');
+        componentElement.className = 'component';
+        componentElement.dataset.id = compData.id;
+        componentElement.textContent = compData.label;
+        componentElement.style.position = 'absolute';
+        componentElement.style.left = `${compData.x}px`;
+        componentElement.style.top = `${compData.y}px`;
 
-    // Правила соединений (что нужно соединить с чем)
-    const correctConnections = [
-        { from: 'client', to: 'server' },
-        { from: 'server', to: 'client' }, // Двунаправленное соединение
-        { from: 'server', to: 'database' },
-        { from: 'database', to: 'server' }, // Двунаправленное соединение
-        { from: 'server', to: 'cache' },
-        { from: 'cache', to: 'server' } // Двунаправленное соединение
-    ];
+        // Добавление тултипа с информацией
+        if (compData.info) {
+            componentElement.title = compData.info;
+        }
+
+        gameAreaElement.appendChild(componentElement);
+        return { ...compData, element: componentElement };
+    });
+
+    // Правила соединений
+    const correctConnections = currentScenario.correctConnections;
 
     // Keep track of user's connections
     const userConnections = [];
-
-    // Create components
-    components.forEach(comp => {
-        const component = document.createElement('div');
-        component.className = 'component';
-        component.id = comp.id;
-        component.dataset.id = comp.id;
-        component.style.left = `${comp.x}px`;
-        component.style.top = `${comp.y}px`;
-
-        const label = document.createElement('div');
-        label.textContent = comp.label;
-        label.style.fontSize = '0.8rem';
-        label.style.textAlign = 'center';
-        label.style.paddingTop = '15px';
-        component.appendChild(label);
-
-        gameAreaElement.appendChild(component);
-    });
 
     // Drawing state variables
     let isDrawing = false;
@@ -169,7 +197,7 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
     }
 
     function endDrawing(endComponent) {
-        if (!isDrawing || !startComponent || !endComponent || startComponent === endComponent) {
+        if (!isDrawing || !startComponent || !endComponent) {
             cancelDrawing();
             return;
         }
@@ -186,10 +214,36 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
             const endRect = endComponent.getBoundingClientRect();
             const gameRect = gameAreaElement.getBoundingClientRect();
 
-            const x1 = startRect.left + startRect.width / 2 - gameRect.left;
-            const y1 = startRect.top + startRect.height / 2 - gameRect.top;
-            const x2 = endRect.left + endRect.width / 2 - gameRect.left;
-            const y2 = endRect.top + endRect.height / 2 - gameRect.top;
+            let x1 = startRect.left + startRect.width / 2 - gameRect.left;
+            let y1 = startRect.top + startRect.height / 2 - gameRect.top;
+            let x2 = endRect.left + endRect.width / 2 - gameRect.left;
+            let y2 = endRect.top + endRect.height / 2 - gameRect.top;
+
+            // Проверяем, есть ли обратное соединение
+            const reverseConnectionExists = userConnections.some(conn =>
+                conn.from === toId && conn.to === fromId
+            );
+
+            if (reverseConnectionExists) {
+                const offsetAmount = 5; // Сдвиг в пикселях
+
+                // Вектор линии (от текущей toId к fromId, чтобы получить перпендикуляр для fromId -> toId)
+                let dx = x1 - x2;
+                let dy = y1 - y2;
+                const length = Math.sqrt(dx * dx + dy * dy);
+
+                if (length > 0) { // Предотвращение деления на ноль
+                    // Нормализованный перпендикулярный вектор
+                    const perpX = -dy / length;
+                    const perpY = dx / length;
+
+                    // Смещаем обе точки текущей линии
+                    x1 += perpX * offsetAmount;
+                    y1 += perpY * offsetAmount;
+                    x2 += perpX * offsetAmount;
+                    y2 += perpY * offsetAmount;
+                }
+            }
 
             currentLine.setAttribute('x1', x1);
             currentLine.setAttribute('y1', y1);
@@ -229,6 +283,7 @@ export function setupConnectComponentsTask({ gameAreaElement, taskTitleElement, 
             playSoundFromGame('error');
         }
 
+        // Сброс состояния рисования
         isDrawing = false;
         startComponent = null;
         currentLine = null;

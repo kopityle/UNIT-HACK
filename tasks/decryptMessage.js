@@ -6,19 +6,22 @@ export function setupDecryptMessageTask({ gameAreaElement, taskTitleElement, com
     // Сообщения с шифрованием и вариантами ответов
     const messages = [
         {
-            encrypted: "рбуит - пкрблтп", // сдвиг +1
+            encrypted: "тболу - рёуёсвс", // Шифруем "санкт - петербр" сдвигом +1
             options: ["сатир - плохое", "сбуйс - рлпчпе", "санкт - петербр", "сауис - плохой"],
-            correctIndex: 3
+            correctIndex: 2,
+            hint: "Шифр Цезаря: каждая буква смещена на 1 вперед по алфавиту. (А->Б)"
         },
         {
-            encrypted: "лпоухс - мхдщкл", // сдвиг -1
+            encrypted: "лпоухс - мхдщкл", // Шифруем "контур - лучший" сдвигом -1
             options: ["контур - лучший", "лпнфус - дшъщкй", "мрохут - нцдылн", "контур - худший"],
-            correctIndex: 0
+            correctIndex: 0,
+            hint: "Шифр Цезаря: каждая буква смещена на 1 назад по алфавиту. (Б->А)"
         },
         {
-            encrypted: "еъоызх спуоэтэйкк", // обратный порядок
+            encrypted: "яиголонхет рутнок", // "контур технологии" наоборот
             options: ["умные технологии", "новые разработки", "контур технологии", "цифровые решения"],
-            correctIndex: 2
+            correctIndex: 2,
+            hint: "Сообщение просто прочитано задом наперед!"
         }
     ];
 
@@ -33,9 +36,15 @@ export function setupDecryptMessageTask({ gameAreaElement, taskTitleElement, com
     messageContainer.style.alignItems = 'center';
     messageContainer.style.gap = '30px';
 
+    // Отобразить подсказку
+    const hintElement = document.createElement('p');
+    hintElement.className = 'task-hint';
+    hintElement.textContent = `Подсказка: ${message.hint}`;
+    messageContainer.appendChild(hintElement);
+
     // Create encrypted message
     const encryptedElement = document.createElement('div');
-    encryptedElement.className = 'code-snippet'; // Reuse code-snippet style
+    encryptedElement.className = 'code-snippet';
     encryptedElement.style.fontSize = '1.5rem';
     encryptedElement.style.padding = '20px 30px';
     encryptedElement.textContent = message.encrypted;
@@ -48,7 +57,7 @@ export function setupDecryptMessageTask({ gameAreaElement, taskTitleElement, com
     optionsContainer.style.flexDirection = 'column';
     optionsContainer.style.gap = '15px';
 
-    const choiceButtons = []; // Store button references to disable later
+    const choiceButtons = [];
 
     message.options.forEach((option, index) => {
         const button = document.createElement('button');
@@ -59,9 +68,11 @@ export function setupDecryptMessageTask({ gameAreaElement, taskTitleElement, com
         button.addEventListener('click', () => {
             if (index === message.correctIndex) {
                 button.style.backgroundColor = 'var(--success-color)';
+                playSoundFromGame('success');
                 completeTask(true, Math.floor(gameState.timeLeft / 10));
             } else {
                 button.style.backgroundColor = 'var(--error-color)';
+                playSoundFromGame('error');
                 completeTask(false);
             }
         });
