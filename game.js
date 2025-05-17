@@ -52,18 +52,6 @@ async function loadSound(name, url) {
     }
 }
 
-function playSound(name) {
-    const buffer = audioBuffers[name];
-    if (buffer && audioContext) {
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.start(0);
-    } else {
-        console.warn(`Sound buffer not found or audio context not initialized: ${name}`);
-    }
-}
-
 // Load all sounds initially
 loadSound('success', 'success.mp3');
 loadSound('error', 'error.mp3');

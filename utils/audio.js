@@ -52,7 +52,6 @@ export async function loadAllSounds() {
     console.log("All sounds loading attempted.");
 }
 
-
 export function playSound(name) {
     const buffer = audioBuffers[name];
     if (buffer && audioContext && audioContext.state === 'running') {
